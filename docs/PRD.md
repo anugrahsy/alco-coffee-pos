@@ -324,3 +324,66 @@ Status order hanya `unpaid`, `paid`, `cancelled`, `refunded`. Catatan keuangan m
 - Kas dan Bank/QRIS adalah saldo buku toko; belum ada settlement/fee otomatis. Fee yang benar-benar dibayar dicatat sebagai biaya operasional.
 - Admin dapat memasukkan tanggal lampau untuk catatan keuangan dengan alasan; cashier hanya hari ini. Refund/koreksi terjadi pada waktu aksi, tidak memilih tanggal lampau.
 - Tidak ada approval pengeluaran kasir atau alur jurnal manual dalam MVP. Semua input tetap memiliki pencatat dan waktu.
+
+## 13. Catatan development wajib
+
+Bagian ini adalah instruksi operasional untuk seluruh pekerjaan desain dan implementasi berikutnya. **Wajib dibaca sebelum mengubah UI, alur, komponen, route, atau fitur.** Jika ada contoh lama di dokumen lain yang bertentangan dengan PRD v1.1, gunakan keputusan produk dan struktur route pada PRD ini. `UI-UX-GUIDELINES.md` tetap menjadi panduan visual/interaksi, tetapi contoh route mandiri, role `owner`, atau shift wajib di dalamnya tidak menggantikan keputusan terbaru pada PRD.
+
+### 13.1 BoardUI wajib menjadi fondasi UI
+
+- Selalu gunakan komponen, primitive, pola, dan semantic token BoardUI. Jangan membuat komponen lookalike sebelum mengecek komponen yang sudah terpasang di `components/base/` dan `components/application/`.
+- Pada setiap pekerjaan UI, gunakan **BoardUI MCP** untuk mengecek katalog, API komponen, theme, dan usage example; gunakan juga **skill BoardUI** yang terpasang untuk workflow implementasinya. Jika MCP atau skill belum tersedia pada sesi development, hentikan asumsi tentang API komponen, laporkan keterbatasannya, lalu pasang/aktifkan integrasi BoardUI sebelum membuat pengganti.
+- Selalu cek apakah komponen yang terlihat pada referensi Pro juga tersedia pada BoardUI Free. Jika tersedia, instal dan gunakan versi Free tersebut. Instal komponen yang belum ada melalui BoardUI MCP atau CLI resmi; jangan menyalin implementasi Pro.
+- Custom composition hanya dibenarkan ketika tampilan referensi Pro tidak tersedia sebagai komponen BoardUI Free. Dalam kondisi itu, susun tampilan dari primitive Free yang tersedia dan implementasikan logic/fungsinya sendiri tanpa menyalin source atau asset berlisensi Pro.
+- Ikuti seluruh aturan BoardUI di `AGENTS.md`: semantic color tokens, composite typography utilities, spacing/shape, `DirectionProvider`, logical direction styles, progressive blur pada internal scroll region, `cx()`, ikon `@remixicon/react`, form berbasis `react-aria-components`, dan focus state yang aksesibel.
+
+### 13.2 Referensi visual wajib
+
+Semua file berikut harus diperiksa saat merancang atau mengubah halaman yang relevan. File HTML adalah hasil reverse engineering visual: **UI dan CSS menjadi acuan visual, tetapi logic, state, aksesibilitas, data, dan function harus dibuat sendiri sesuai PRD dan Tech Stack.**
+
+| File referensi | Acuan utama |
+|---|---|
+| [`reference-boardui-design-task.html`](./reference-boardui-design-task.html) | Acuan utama project board/Kanban, khususnya menu **Pesanan Tersimpan**: kolom adalah status pesanan dan kartu adalah pesanan tersimpan. Implementasi yang harus ditiru dan diekstensikan ada di `src/components/application/pos/pos-saved-orders.tsx`. |
+| [`reference-dashboard.html`](./reference-dashboard.html) | Shell dashboard, KPI, chart, recent activity, filter, data table, pagination, hierarchy, dan density. |
+| [`reference-finance.html`](./reference-finance.html) | Ringkasan keuangan, cash-flow/spending cards, category breakdown, chart, transaction table, dan filter. |
+| [`reference-marketing.html`](./reference-marketing.html) | KPI campaign-like metrics, funnel/breakdown, tabbed analytics, chart, dan table; adaptasikan untuk promo dan analitik tanpa menyalin domain marketing. |
+| [`reference-calendar.html`](./reference-calendar.html) | Grid kalender, date navigation, event density, dan visual scheduling bila dibutuhkan oleh date-based UI. |
+| [`reference-notif.html`](./reference-notif.html) | Notification panel, unread/read state, grouping/filter, contextual action, dan feedback system. |
+| [`reference-setting.html`](./reference-setting.html) | Settings navigation, grouped preferences, control rows, plan/limit-style information blocks, dan hierarchy pengaturan. |
+| [`reference-medical-profile.html`](./reference-medical-profile.html) | Profile/detail layout, metric cards, timeline/alerts, activity visualization, dan dense information hierarchy. |
+
+Jangan membuat bahasa visual baru yang terpisah dari kumpulan referensi ini. Pilih pola referensi yang paling cocok dengan kebutuhan fitur, lalu adaptasikan konten dan logic ke domain coffee shop POS.
+
+### 13.3 Route dan struktur aplikasi yang tidak boleh berubah
+
+- `/dashboard` adalah halaman Dashboard admin.
+- `/pos` adalah halaman POS untuk admin dan cashier.
+- `/login` adalah halaman autentikasi.
+- Modul seperti penjualan, pesanan tersimpan, monitor, keuangan, produk, kategori, promo, laporan, dan pengaturan tetap menjadi menu/tab/panel/modal di dalam `/pos` atau `/dashboard`, bukan route aplikasi utama baru.
+- Hanya ada role `admin` dan `cashier`. Istilah atau contoh `owner` pada dokumen lama dibaca sebagai admin bila konteksnya masih relevan.
+- Shift tetap P1 dan tidak boleh menjadi syarat untuk menyimpan atau membayar order MVP.
+
+### 13.4 Melanjutkan desain dan development yang sudah ada
+
+- Pertahankan pekerjaan yang sudah dibuat dan pahami pola komponennya sebelum mengubahnya. Jangan mengganti keseluruhan layout tanpa alasan produk, usability, atau konsistensi design system yang jelas.
+- **Arahan terbaru: jangan mengubah desain pengguna.** Pertahankan tampilan desktop, susunan panel, warna, tipografi, data, dan karakter komponen yang sudah dirancang, termasuk **Penjualan**, **Promo**, **Produk**, dan **Kategori**. Pekerjaan saat ini terbatas pada optimasi, bug/inkonsistensi UI, aksesibilitas, dan responsive desktop/tablet/mobile. Reflow, drawer pada layar kecil, dan scroll tabel diperbolehkan untuk menjaga kegunaan tanpa merancang ulang; perubahan desain lain memerlukan persetujuan.
+- Untuk **Pesanan Tersimpan**, jangan membuat layout baru. Ikuti dan ekstensikan `reference-boardui-design-task.html` serta implementasi `src/components/application/pos/pos-saved-orders.tsx` sesuai ketentuan project board/Kanban pada `AGENTS.md`.
+- Visual referensi bukan bukti bahwa fitur sudah berfungsi. Setiap filter, form, table, drawer, modal, pagination, status, chart, checkout, refund, export, dan feedback state harus memiliki logic nyata sesuai PRD/Tech Stack.
+- Sebelum membuat UI baru: periksa implementasi lokal, cocokkan dengan referensi HTML, cek komponen BoardUI Free melalui MCP/katalog, instal komponen yang tersedia, lalu custom-compose hanya bagian yang benar-benar tidak tersedia.
+
+### 13.5 Urutan sumber kebenaran untuk development
+
+1. Aturan repository pada `AGENTS.md` dan bagian **Catatan development wajib** ini.
+2. Keputusan produk, role, route, data, dan acceptance criteria pada `PRD.md` versi terbaru.
+3. Arsitektur, keamanan, transaksi, dan kontrak data pada `TECH-STACK.md`.
+4. Prinsip visual, responsive, accessibility, dan interaction pada `UI-UX-GUIDELINES.md`, selama tidak bertentangan dengan tiga sumber di atas.
+5. File `reference-*.html` sebagai acuan visual/layout, bukan source of truth untuk logic atau permission.
+6. Implementasi UI yang sudah ada sebagai baseline yang dipertahankan dan ditingkatkan secara bertahap.
+
+### 13.6 Framework dan performa UI
+
+- Framework yang diputuskan adalah **TanStack Start**, bukan React/Vite SPA standalone. React dan Vite tetap dipakai sebagai library UI serta tooling Start. Jangan mengganti framework untuk memperbaiki delay.
+- Navigasi internal memakai TanStack Router `Link`/`navigate`, bukan reload dokumen. Pertahankan preload intent; modul sekunder seperti Settings dimuat saat diperlukan, bukan membebani setiap halaman.
+- Rendering awal saat ini client-side (`ssr: false`). Dashboard/POS privat tidak wajib dipindahkan ke SSR tanpa bukti kebutuhan. Evaluasi SSR selektif berdasarkan pengukuran production, kesiapan auth/server data, dan dampak hydration; bukan asumsi bahwa SSR selalu lebih cepat.
+- Verifikasi mobile, tablet, desktop: tidak ada overflow halaman; tabel/board boleh scroll di panel masing-masing; katalog dan keranjang POS harus tetap dapat diakses pada layar kecil. Desain referensi dan implementasi pengguna tetap menjadi baseline.
+- Catat metrik development dan production secara terpisah. Hasil lokal bukan jaminan kecepatan server/jaringan produksi. Integrasi Supabase serta verifikasi finansial/security tetap pekerjaan tersendiri, tidak dianggap selesai oleh audit UI.

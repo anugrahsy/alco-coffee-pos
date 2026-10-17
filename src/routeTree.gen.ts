@@ -13,9 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProtectedRouteImport } from './routes/_protected'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ProtectedDashboardRouteImport } from './routes/_protected.dashboard'
+import { Route as ProtectedKategoriRouteImport } from './routes/_protected.kategori'
 import { Route as ProtectedMonitorRouteImport } from './routes/_protected.monitor'
 import { Route as ProtectedPenjualanRouteImport } from './routes/_protected.penjualan'
 import { Route as ProtectedPosRouteImport } from './routes/_protected.pos'
+import { Route as ProtectedProdukRouteImport } from './routes/_protected.produk'
+import { Route as ProtectedPromoRouteImport } from './routes/_protected.promo'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -37,6 +40,11 @@ const ProtectedDashboardRoute = ProtectedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedKategoriRoute = ProtectedKategoriRouteImport.update({
+  id: '/kategori',
+  path: '/kategori',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ProtectedMonitorRoute = ProtectedMonitorRouteImport.update({
   id: '/monitor',
   path: '/monitor',
@@ -52,6 +60,16 @@ const ProtectedPosRoute = ProtectedPosRouteImport.update({
   path: '/pos',
   getParentRoute: () => ProtectedRoute,
 } as any)
+const ProtectedProdukRoute = ProtectedProdukRouteImport.update({
+  id: '/produk',
+  path: '/produk',
+  getParentRoute: () => ProtectedRoute,
+} as any)
+const ProtectedPromoRoute = ProtectedPromoRouteImport.update({
+  id: '/promo',
+  path: '/promo',
+  getParentRoute: () => ProtectedRoute,
+} as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -62,18 +80,24 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/kategori': typeof ProtectedKategoriRoute
   '/monitor': typeof ProtectedMonitorRoute
   '/penjualan': typeof ProtectedPenjualanRoute
   '/pos': typeof ProtectedPosRoute
+  '/produk': typeof ProtectedProdukRoute
+  '/promo': typeof ProtectedPromoRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof ProtectedDashboardRoute
+  '/kategori': typeof ProtectedKategoriRoute
   '/monitor': typeof ProtectedMonitorRoute
   '/penjualan': typeof ProtectedPenjualanRoute
   '/pos': typeof ProtectedPosRoute
+  '/produk': typeof ProtectedProdukRoute
+  '/promo': typeof ProtectedPromoRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRoutesById {
@@ -82,9 +106,12 @@ export interface FileRoutesById {
   '/_protected': typeof ProtectedRouteWithChildren
   '/login': typeof LoginRoute
   '/_protected/dashboard': typeof ProtectedDashboardRoute
+  '/_protected/kategori': typeof ProtectedKategoriRoute
   '/_protected/monitor': typeof ProtectedMonitorRoute
   '/_protected/penjualan': typeof ProtectedPenjualanRoute
   '/_protected/pos': typeof ProtectedPosRoute
+  '/_protected/produk': typeof ProtectedProdukRoute
+  '/_protected/promo': typeof ProtectedPromoRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
 }
 export interface FileRouteTypes {
@@ -93,18 +120,24 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/kategori'
     | '/monitor'
     | '/penjualan'
     | '/pos'
+    | '/produk'
+    | '/promo'
     | '/api/auth/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
     | '/dashboard'
+    | '/kategori'
     | '/monitor'
     | '/penjualan'
     | '/pos'
+    | '/produk'
+    | '/promo'
     | '/api/auth/$'
   id:
     | '__root__'
@@ -112,9 +145,12 @@ export interface FileRouteTypes {
     | '/_protected'
     | '/login'
     | '/_protected/dashboard'
+    | '/_protected/kategori'
     | '/_protected/monitor'
     | '/_protected/penjualan'
     | '/_protected/pos'
+    | '/_protected/produk'
+    | '/_protected/promo'
     | '/api/auth/$'
   fileRoutesById: FileRoutesById
 }
@@ -155,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedDashboardRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/kategori': {
+      id: '/_protected/kategori'
+      path: '/kategori'
+      fullPath: '/kategori'
+      preLoaderRoute: typeof ProtectedKategoriRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/_protected/monitor': {
       id: '/_protected/monitor'
       path: '/monitor'
@@ -176,6 +219,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProtectedPosRouteImport
       parentRoute: typeof ProtectedRoute
     }
+    '/_protected/produk': {
+      id: '/_protected/produk'
+      path: '/produk'
+      fullPath: '/produk'
+      preLoaderRoute: typeof ProtectedProdukRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
+    '/_protected/promo': {
+      id: '/_protected/promo'
+      path: '/promo'
+      fullPath: '/promo'
+      preLoaderRoute: typeof ProtectedPromoRouteImport
+      parentRoute: typeof ProtectedRoute
+    }
     '/api/auth/$': {
       id: '/api/auth/$'
       path: '/api/auth/$'
@@ -188,16 +245,22 @@ declare module '@tanstack/react-router' {
 
 interface ProtectedRouteChildren {
   ProtectedDashboardRoute: typeof ProtectedDashboardRoute
+  ProtectedKategoriRoute: typeof ProtectedKategoriRoute
   ProtectedMonitorRoute: typeof ProtectedMonitorRoute
   ProtectedPenjualanRoute: typeof ProtectedPenjualanRoute
   ProtectedPosRoute: typeof ProtectedPosRoute
+  ProtectedProdukRoute: typeof ProtectedProdukRoute
+  ProtectedPromoRoute: typeof ProtectedPromoRoute
 }
 
 const ProtectedRouteChildren: ProtectedRouteChildren = {
   ProtectedDashboardRoute: ProtectedDashboardRoute,
+  ProtectedKategoriRoute: ProtectedKategoriRoute,
   ProtectedMonitorRoute: ProtectedMonitorRoute,
   ProtectedPenjualanRoute: ProtectedPenjualanRoute,
   ProtectedPosRoute: ProtectedPosRoute,
+  ProtectedProdukRoute: ProtectedProdukRoute,
+  ProtectedPromoRoute: ProtectedPromoRoute,
 }
 
 const ProtectedRouteWithChildren = ProtectedRoute._addFileChildren(

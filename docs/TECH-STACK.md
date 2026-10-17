@@ -1,6 +1,6 @@
 # Coffee Shop POS — Technical Stack & Architecture Plan
 
-> **Versi:** 1.1 · **Tanggal:** 15 Oktober 2026 · **Deployment:** CSR/SPA + BaaS · **Target biaya awal:** free tier  
+> **Versi:** 1.2 · **Tanggal:** 17 Oktober 2026 · **Deployment:** TanStack Start + Cloudflare Workers + BaaS · **Target biaya awal:** free tier
 > **Acuan produk:** [PRD.md](./PRD.md) · **Desain:** [UI-UX-GUIDELINES.md](./UI-UX-GUIDELINES.md)
 
 ## 0. Batas implementasi
@@ -8,7 +8,7 @@
 - Tepat dua role `admin` dan `cashier`, dua halaman utama `/pos` dan `/dashboard`.
 - Admin dapat memakai keduanya; cashier hanya POS, termasuk Monitor dengan laba agregat.
 - Login/state sistem adalah pendukung; modul lain memakai tab/panel/modal dan query params, bukan route mandiri.
-- Pertahankan React/Vite, Supabase, Cloudflare Pages, BoardUI Free, CSV/XLSX. Tidak menambah backend Node/SSR/ORM, inventory atau akuntansi penuh.
+- Pertahankan **TanStack Start**, React, Supabase, adapter Cloudflare Workers, BoardUI Free, CSV/XLSX. Vite tetap menjadi build/dev tooling TanStack Start, bukan alasan mengubah aplikasi menjadi React/Vite SPA standalone. Tidak menambah backend/ORM terpisah, inventory atau akuntansi penuh.
 - Source of truth uang dan status order ada di PostgreSQL. Browser tidak dapat menulis payment/gerak uang secara langsung.
 - Simpan order wajib; shift, closing bulanan dan approval berlapis tidak menjadi dependensi MVP.
 - Detail aturan bisnis dan rumus mengikuti PRD, termasuk snapshot, tanggal bayar, kategori pengeluaran, refund, serta koreksi.
@@ -17,7 +17,7 @@
 
 | Layer | Pilihan | Alasan | Hindari di MVP |
 |---|---|---|---|
-| Runtime UI | React 19 + TypeScript + Vite | Ringan, CSR, build static | Next.js SSR, TanStack Start runtime |
+| Runtime UI | TanStack Start + React 19 + TypeScript | File-based routing, client navigation; rendering dapat dipilih | Mengganti framework untuk mengatasi bug navigasi/layout |
 | Route | TanStack Router | File-based type-safe routes, nested layouts, route guards | Routing manual tanpa typing |
 | Fetch/cache | TanStack Query | Cache, invalidation, retry query | Mengandalkan Zustand untuk server data |
 | Client state | React state; Zustand **hanya jika perlu** untuk draft cart | Sederhana | Menjadikan Zustand DB kedua |
@@ -31,34 +31,28 @@
 | Files | Supabase Storage | Foto produk/bukti transaksi | Menyimpan base64 images di DB |
 | Exports | CSV utilities + ExcelJS (browser dynamic import) | CSV & native XLSX | Pseudo `.xlsx` berbentuk CSV |
 | Dates | `date-fns` + `date-fns-tz` **atau** standar JS Temporal polyfill jika dibutuhkan | WIB / UTC robust | Menggunakan browser locale tanpa eksplisit zone |
-| Hosting | Cloudflare Pages Free | Static hosting untuk bisnis | Vercel Hobby komersial |
-| Package manager | pnpm | Reproducible lockfile | Berganti-ganti manager |
+| Hosting | Cloudflare Workers + static assets melalui adapter yang sudah terpasang | Sesuai `vite.config.ts`, `wrangler.jsonc`, dan server entry TanStack Start | Mengunggah output Start sebagai SPA static biasa tanpa evaluasi |
+| Package manager | npm untuk workspace saat ini (`package-lock.json`) | Reproducible lockfile; gunakan `npm ci` | Berganti-ganti manager/menulis ulang lockfile dalam pekerjaan UI |
 | Tests | Vitest + React Testing Library + Playwright | Unit, integration, e2e | Menerima demo tanpa tes finansial |
 | DB migrations | Supabase CLI migrations | Versioned schema & RPC | SQL manual di production tanpa version control |
 
-**Catatan:** TanStack Router adalah library React, **bukan** TanStack Start. Arsitektur saat ini tidak memiliki runtime TanStack Start. Bila ingin pindah ke TanStack Start nanti, evaluasi nilai tambah SSR/Server Functions baru setelah ada kebutuhan nyata.
+**Keputusan rendering:** workspace sudah menggunakan TanStack Start. Saat audit, root route memakai `ssr: false`, sehingga komponen halaman dirender di browser, tetapi build tetap memiliki server entry/adapter Start. Ini bukan migrasi ke framework lain dan bukan otomatis mode static SPA. Untuk dashboard/POS privat, pertahankan client rendering terlebih dahulu; SSR selektif baru dievaluasi bila metrik initial load production menunjukkan kebutuhan. SSR tidak menggantikan client navigation, code splitting, cache data, atau perbaikan layout. [Selective SSR](https://tanstack.com/start/latest/docs/framework/react/guide/selective-ssr).
+
+**Prioritas kecepatan:** gunakan `Link` TanStack Router untuk navigasi internal dan preload berbasis intent; jangan membuat reload dokumen untuk berpindah menu. Settings/modul sekunder dimuat dinamis; devtools hanya aktif saat development dengan `VITE_DEVTOOLS=true`. Ukur development cold start, production initial load, dan perpindahan menu secara terpisah. Hasil localhost tidak menjamin performa jaringan/server production. [Preloading](https://tanstack.com/router/latest/docs/framework/react/guide/preloading).
 
 ### 1.1 BoardUI install resmi
 
 Dokumentasi BoardUI saat penulisan: https://www.boardui.com/getting-started dan https://github.com/BoardUI/boardui. Vendor menggunakan **React + Tailwind CSS v4** dan menyediakan command:
 
 ```bash
-pnpm create vite coffee-pos --template react-ts
-cd coffee-pos
-pnpm install
-pnpm add @tanstack/react-router @tanstack/react-query @supabase/supabase-js \
-  react-hook-form zod @hookform/resolvers recharts lucide-react \
-  date-fns date-fns-tz
-pnpm add -D @tanstack/router-plugin @types/node vitest \
-  @testing-library/react @testing-library/jest-dom @playwright/test
-# Ikuti petunjuk resmi Tailwind v4 pada Vite, lalu:
-pnpm dlx boardui@latest init
-pnpm dlx boardui@latest add button input select table tabs \
-  dropdown pagination date-picker
-# instalasi dan nama komponen akhir perlu dicek dari katalog/CLI aktual
+# Workspace sudah memakai TanStack Start + BoardUI. Jangan scaffold ulang.
+npm ci
+npm run dev
+# Cek komponen terpasang dan BoardUI MCP sebelum menambah komponen:
+npx boardui@latest add <nama-komponen-free-terverifikasi>
 ```
 
-> Versi paket tidak dipaku sembarang. Pin exact versions dalam lockfile setelah `pnpm install` dan verifikasi kompatibilitas BoardUI. Jangan menjalankan CLI BoardUI dengan mengasumsikan template Pro termasuk paket Free.
+> Versi paket mengikuti lockfile dan kompatibilitas TanStack Start/BoardUI. Tabel di atas juga memuat rencana integrasi; paket seperti Supabase, ExcelJS dan test runner belum otomatis terpasang. Jangan menjalankan CLI BoardUI dengan mengasumsikan template Pro termasuk paket Free.
 
 ### 1.2 Mengapa bukan Neon pada MVP?
 
@@ -70,7 +64,7 @@ Neon kuat sebagai PostgreSQL, tetapi Supabase sudah memberikan Auth, Data API, S
 
 ```mermaid
 flowchart TD
-  U[Admin / Cashier] --> A[React SPA - Cloudflare Pages]
+  U[Admin / Cashier] --> A[TanStack Start - Cloudflare Workers + assets]
   A --> P[POS - kedua role]
   A --> D[Dashboard - admin]
   A --> S[Supabase Auth / Data API / RPC]
@@ -328,7 +322,7 @@ Refetch saat window focus, refresh manual dan staleTime pendek 30–60 detik. Ta
 4. Create Admin Auth user via safe admin/bootstrap process, then manually create `profiles` entry. Disable public sign-up in production.
 5. RLS `ENABLE` on all exposed tables, grant only minimum operations, test via anon, admin, cashier.
 6. Configure storage buckets `product-images` (public-read permitted if only products) and `expense-proofs` (private, read admin/cashier dalam outlet; upload sesuai pembuat catatan); never create public URL for private proof.
-7. Configure allowed origin/redirect URLs for Supabase Auth (Cloudflare Pages production + local dev; preview domains only when necessary).
+7. Configure allowed origin/redirect URLs for Supabase Auth (domain production Cloudflare + local dev; preview domains only when necessary).
 8. Setup monitoring for database storage, error rate, and inactivity; free projects may pause under inactivity and do not have built-in managed backups.
 
 ### 8.2 Environment variables
@@ -338,25 +332,27 @@ Refetch saat window focus, refresh manual dan staleTime pendek 30–60 detik. Ta
 VITE_SUPABASE_URL=https://example.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_example
 VITE_APP_NAME=Coffee Shop POS
+# Optional development tools; default off, not required for the UI
+VITE_DEVTOOLS=false
 ```
 
 **Strictly forbidden in frontend:** `SUPABASE_SERVICE_ROLE_KEY`, Supabase secret key, DB connection string/password, storage S3 secret, payment gateway API secret.
 
-### 8.3 Cloudflare Pages deployment
+### 8.3 Cloudflare Workers deployment (TanStack Start)
 
 1. Push repo to GitHub.
-2. Create Cloudflare Pages project; connect Git repo.
-3. Framework preset Vite (or none), root `/`, install via `pnpm install --frozen-lockfile`, build `pnpm build`, output `dist`.
+2. Gunakan konfigurasi Cloudflare Vite plugin dan Wrangler yang sudah ada; jangan menggantinya dengan preset static Vite/Pages.
+3. Install `npm ci`, verifikasi `npx tsc --noEmit`, lalu `npm run build`. Output mencakup `dist/client` dan `dist/server`; bukan hanya static `dist`.
 4. Use supported Node version in Cloudflare build environment; pin in `.node-version` / config if necessary.
-5. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` in Pages environment.
-6. Enable SPA fallback for deep links (`/pos?menu=tersimpan&order=...`, `/dashboard?menu=keuangan`). Verify actual Pages routing behavior and fallback config if needed; don't accidentally return a 404 for browser refresh.
-7. Deploy staging branch preview, run smoke tests, then production branch `main`.
-8. Verify login, DB policies, images and exports on production domain.
+5. Set `VITE_SUPABASE_URL` dan `VITE_SUPABASE_PUBLISHABLE_KEY` pada build environment; secret server tidak memakai prefiks `VITE_`.
+6. Uji `npm run preview` secara lokal, termasuk refresh/deep links `/login`, `/dashboard`, `/pos?view=simpan-pesanan`. Gunakan routing Start/server entry yang dibangun, bukan menambahkan fallback SPA secara sembarang.
+7. Setelah approval deployment, jalankan workflow `npm run deploy` yang sudah tersedia untuk target staging dahulu; verifikasi domain/config/bindings sebelum production.
+8. Verify login, DB policies, images and exports on production domain. [Panduan resmi TanStack Start di Cloudflare Workers](https://developers.cloudflare.com/workers/framework-guides/web-apps/tanstack-start/).
 
 ### 8.4 Free-tier capacity assumptions
 
 - 40 products, 1–3 cashiers, dozens/hundreds of orders/day are **likely feasible** but not guaranteed by product count alone.
-- Cloudflare static Pages hosting minimizes Worker invocation concerns **because no Worker/server functions are used**.
+- Deployment saat ini menggunakan Worker/server entry TanStack Start meskipun komponen memakai client rendering; pantau request, CPU, asset caching, dan batas plan yang dipilih. Jangan menganggap penggunaan Worker nol.
 - Supabase Free database and Storage quotas are finite; index/ledger grow with order volume. Check current plan limits at https://supabase.com/pricing and https://developers.cloudflare.com/pages/platform/limits/ rather than hardcode long-term figures.
 - Supabase Free may pause inactive projects; production POS needs a recovery/backup plan. If recordkeeping becomes business-critical, be prepared to move to a paid DB or self-managed backup strategy.
 
@@ -425,7 +421,7 @@ Tes integrasi SQL memeriksa rollback atomik, row locks/constraints, idempotensi 
 
 ## 11. Urutan kerja dan definition of done
 
-1. Setup React/Vite/BoardUI, auth, dua role/dua halaman dan migrations/RLS.
+1. Pertahankan TanStack Start/React/BoardUI yang sudah ada, auth, dua role/dua halaman dan migrations/RLS.
 2. Master produk/HPP/kategori/promo; save/edit/cancel unpaid dan checkout atomik.
 3. POS Penjualan, rekap produk, Monitor, pemasukan/pengeluaran dan struk.
 4. Dashboard audit, refund/koreksi, ekspor dan pengaturan.

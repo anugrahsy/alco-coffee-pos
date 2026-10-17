@@ -113,13 +113,13 @@ export function CustomersTable() {
   const [page, setPage] = useState(1);
 
   return (
-    <section className="flex w-full flex-col rounded-2xl border border-border-button-default px-0.5 pb-3 pt-2">
-      <div className="flex h-14 items-center justify-between gap-3 px-3 py-1">
+    <section className="flex min-w-0 w-full flex-col rounded-2xl border border-border-button-default px-0.5 pb-3 pt-2">
+      <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 px-3 py-1">
         <div className="flex h-10 flex-col justify-center">
           <span className="text-body-medium text-text-tertiary">Total Results</span>
           <span className="text-body-medium text-text-primary">660 customers</span>
         </div>
-        <div className="flex items-center justify-end gap-2.5">
+        <div className="flex max-w-full flex-wrap items-center justify-end gap-2.5">
           <FilterSelect
             label="All prices"
             options={["All prices", "Under $500", "$500 - $1,000", "Over $1,000"]}
@@ -134,19 +134,21 @@ export function CustomersTable() {
           />
           <Input
             placeholder="Search"
-            aria-label="Search"
+            aria-label="Search customers"
             leadingIcon={RiSearchLine}
-            className="w-[200px]"
+            className="min-w-[153px] flex-1 sm:w-[153px] sm:min-w-0 sm:flex-none"
+            fieldClassName="rounded-full bg-background-secondary-default"
+            inputClassName="text-body-medium"
           />
         </div>
       </div>
 
       <Table aria-label="Customers" className="min-w-[1100px]">
         <TableHeader>
-          <TableColumn id="name" className="w-[178px]">
+          <TableColumn id="name" isRowHeader className="w-[178px]">
             <div className="flex items-center gap-2">
               <Checkbox slot="selection" size="sm" isIndeterminate defaultSelected aria-label="Select all" />
-              <span>Customer name</span>
+              <span>ID Transaksi</span>
             </div>
           </TableColumn>
           <TableColumn id="purchase" className="w-[202px]">

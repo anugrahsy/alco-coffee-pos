@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RiAddLine, RiSearchLine } from "@remixicon/react";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
+import { SoftScroll } from "@/components/application/layout/soft-scroll";
 
 import type { PosCategory, PosProduct } from "./pos-types";
 
@@ -49,7 +50,7 @@ export function PosProducts({
   });
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-[#fafafa]">
+    <div className="flex min-h-0 flex-1 flex-col bg-background-pos-catalog">
       <div className="flex flex-col gap-4 p-4">
         <Input
           value={query}
@@ -77,7 +78,7 @@ export function PosProducts({
           Tidak ada produk yang cocok.
         </div>
       ) : (
-        <div className="grid min-h-0 flex-1 auto-rows-min content-start gap-4 overflow-y-auto p-4 pt-0 sm:grid-cols-3 xl:grid-cols-4">
+        <SoftScroll contentClassName="grid grid-cols-2 auto-rows-min content-start gap-4 p-4 pt-0 sm:grid-cols-3 xl:grid-cols-4" surface="var(--color-background-pos-catalog)">
           {filtered.map((item) => (
             <div
               key={item.id}
@@ -103,6 +104,7 @@ export function PosProducts({
                     size="small"
                     iconOnly
                     leadingIcon={RiAddLine}
+                    className="min-h-11 min-w-11 lg:min-h-0 lg:min-w-0"
                     aria-label={`Tambah ${item.name}`}
                     onClick={() => onAdd(item)}
                   />
@@ -110,7 +112,7 @@ export function PosProducts({
               </div>
             </div>
           ))}
-        </div>
+        </SoftScroll>
       )}
     </div>
   );

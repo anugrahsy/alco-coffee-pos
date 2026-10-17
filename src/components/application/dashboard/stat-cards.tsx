@@ -189,7 +189,7 @@ function PlainStatCard({ stat }: { stat: Stat }) {
       <div className="flex w-full flex-col gap-0.5">
         <p className="w-full text-body-medium text-text-secondary">{stat.label}</p>
         <div className="flex w-full flex-wrap items-center gap-2">
-          <p className="text-title-1-medium whitespace-nowrap text-text-primary">{stat.value}</p>
+          <p className="text-headline-medium whitespace-nowrap text-text-primary sm:text-title-1-medium">{stat.value}</p>
           <Chip variant="bold" color={stat.deltaColor}>
             {stat.delta}
           </Chip>

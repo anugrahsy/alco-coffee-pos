@@ -90,7 +90,7 @@ function Monitor() {
       <div className="flex w-full flex-col gap-4">
         <PageHeader current="Monitor" icon={RiDashboardLine} />
 
-        <div className="flex items-end justify-between gap-2">
+        <div className="flex flex-wrap items-end justify-between gap-2">
           <div className="flex flex-col gap-0.5 px-1">
             <span className="text-title-2-medium text-text-primary">Monitor</span>
             <span className="text-body-medium text-text-secondary">
@@ -106,7 +106,7 @@ function Monitor() {
 
         <StatCards variant="footer" stats={STATS} />
 
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 xl:flex-row">
           <RevenueChartCard
             title="Pendapatan"
             currency="Rp "
@@ -128,7 +128,7 @@ function Monitor() {
           <span className="text-body-medium text-text-secondary">Detail transaksi produk</span>
         </div>
 
-        <div className="flex gap-4">
+        <div className="flex flex-col gap-4 xl:flex-row">
           <BestSellersCard />
           <CategoryDonutCard />
           <PaymentDonutCard />

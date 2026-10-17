@@ -23,7 +23,7 @@ export function PageHeader({
 
   return (
     <div className="flex items-center justify-between gap-4">
-      <Breadcrumb aria-label="Breadcrumb">
+      <Breadcrumb aria-label="Breadcrumb" className="min-w-0">
         <BreadcrumbItem href="/dashboard">
           <img src="/brand/logo-calf.jpg" alt="Alco Kopi" className="size-5 rounded-full object-cover" />
           <span>Alco Kopi</span>

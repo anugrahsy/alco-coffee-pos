@@ -9,6 +9,7 @@ import {
   RiWallet3Line,
 } from "@remixicon/react";
 import { Button } from "@/components/base/buttons/button";
+import { SoftScroll } from "@/components/application/layout/soft-scroll";
 import type { PosCartItem } from "./pos-types";
 
 interface PosCartProps {
@@ -25,7 +26,7 @@ export function PosCart({ cart, onChangeQuantity, onRemove }: PosCartProps) {
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex min-h-0 h-full flex-1 flex-col">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-separator-border p-4">
         <h2 className="text-title-3-semibold text-text-primary">Keranjang</h2>
@@ -44,7 +45,7 @@ export function PosCart({ cart, onChangeQuantity, onRemove }: PosCartProps) {
           </p>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto p-4">
+        <SoftScroll contentClassName="p-4">
           <div className="flex flex-col gap-3">
             {cart.map((item) => (
               <div
@@ -71,6 +72,7 @@ export function PosCart({ cart, onChangeQuantity, onRemove }: PosCartProps) {
                     size="small"
                     iconOnly
                     leadingIcon={RiSubtractLine}
+                    className="min-h-11 min-w-11 lg:min-h-0 lg:min-w-0"
                     aria-label="Kurangi"
                     onClick={() => onChangeQuantity(item.id, -1)}
                   />
@@ -82,6 +84,7 @@ export function PosCart({ cart, onChangeQuantity, onRemove }: PosCartProps) {
                     size="small"
                     iconOnly
                     leadingIcon={RiAddLine}
+                    className="min-h-11 min-w-11 lg:min-h-0 lg:min-w-0"
                     aria-label="Tambah"
                     onClick={() => onChangeQuantity(item.id, 1)}
                   />
@@ -91,14 +94,14 @@ export function PosCart({ cart, onChangeQuantity, onRemove }: PosCartProps) {
                     iconOnly
                     leadingIcon={RiDeleteBin6Line}
                     aria-label="Hapus"
-                    className="ms-auto text-text-error-primary"
+                    className="ms-auto min-h-11 min-w-11 text-text-error-primary lg:min-h-0 lg:min-w-0"
                     onClick={() => onRemove(item.id)}
                   />
                 </div>
               </div>
             ))}
           </div>
-        </div>
+        </SoftScroll>
       )}
 
       {/* Summary */}

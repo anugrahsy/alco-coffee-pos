@@ -46,7 +46,7 @@ export function BarChartCard({
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5">
           <span className="text-body-medium text-text-secondary">{title}</span>
           <div className="flex h-8.5 items-center gap-2">

@@ -131,7 +131,7 @@ function MetricHead({
   right?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-2">
+    <div className="flex flex-wrap items-start justify-between gap-2">
       <div className="flex flex-col gap-0.5">
         <span className="text-body-medium text-text-secondary">{label}</span>
         <div className="flex h-8.5 items-center gap-2">
@@ -435,7 +435,7 @@ export function DashboardHome() {
     <div className="flex w-full flex-col gap-4">
       <header className="flex flex-col gap-2">
         <PageHeader />
-        <div className="flex items-end justify-between gap-2">
+        <div className="flex flex-wrap items-end justify-between gap-2">
           <div className="flex h-6.5 items-center px-1">
             <span className="text-title-2-medium text-text-primary">Welcome Owner Admin</span>
           </div>
@@ -443,7 +443,7 @@ export function DashboardHome() {
         </div>
       </header>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 xl:flex-row">
         <RecentHiresCard />
         <BarChartCard
           title="Earned so far"
@@ -452,16 +452,16 @@ export function DashboardHome() {
           deltaTone="up"
           bars={EARNED_BARS}
           yLabels={["$10K", "$5K", "$3K", "$0"]}
-          className="w-[673px] max-w-full shrink-0"
+          className="w-full max-w-full shrink-0 xl:w-[673px]"
         />
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4 xl:flex-row">
         <RevenueChart />
         <ContributionsCard />
       </div>
 
-      <div className="flex gap-4">
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {CUSTOMER_STATS.map((stat) => (
           <StatCard key={stat.label} {...stat} />
         ))}

@@ -188,6 +188,7 @@
 
   /* Background */
   --color-background-full:              var(--color-white);
+  --color-background-pos-catalog:       var(--color-neutral-50);
   /* Ticket detail, Figma 4509:12272. The raw #fafafa surface matches neutral/50. */
   --color-ticket-detail-surface: var(--color-white);
   --color-ticket-detail-low-background: var(--color-indigo-200);
@@ -445,6 +446,7 @@
 
   /* Background */
   --color-background-full:              var(--color-neutral-925);
+  --color-background-pos-catalog:       var(--color-background-full);
   --color-ticket-detail-surface: var(--color-neutral-925);
   --color-ticket-detail-low-background: color-mix(in srgb, var(--color-indigo-950) 60%, transparent);
   --color-ticket-detail-low-hover: color-mix(in srgb, var(--color-indigo-950) 80%, transparent);
@@ -668,6 +670,7 @@
   --color-text-white:           var(--color-text-white);
 
   --color-background-full:              var(--color-background-full);
+  --color-background-pos-catalog:       var(--color-background-pos-catalog);
   --color-ticket-detail-surface: var(--color-ticket-detail-surface);
   --color-ticket-detail-low-background: var(--color-ticket-detail-low-background);
   --color-ticket-detail-low-hover: var(--color-ticket-detail-low-hover);

@@ -3,7 +3,7 @@
 import { useTemplateCopy, useTemplateLanguageSelector } from "@/components/foundations/template-copy/template-copy";
 
 import { useDirection } from "@/components/foundations/direction/direction";
-import { useEffect, useState, type ComponentType, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { RiAddFill, RiEqualizer3Line } from "@remixicon/react";
 import {
   Button as AriaButton,

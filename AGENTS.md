@@ -43,3 +43,7 @@ This project uses BoardUI (React + Tailwind CSS v4, source-owned components unde
 
 When unsure about a token, a component's API, or working example code, ask the BoardUI MCP server: `get_theme`, `get_component`, `get_usage_examples`.
 <!-- boardui:rules:end -->
+
+## Project references
+
+- Halaman/section "Pesanan Tersimpan" (saved orders) harus mengikuti design layout `docs/reference-boardui-design-task.html` (project board / kanban). Implementasi acuan: `src/components/application/pos/pos-saved-orders.tsx`. Kolom = status pesanan, kartu = pesanan tersimpan. Jangan membuat layout baru untuk halaman ini; tiru dan ekstensikan yang ada.
