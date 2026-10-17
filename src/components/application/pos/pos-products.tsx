@@ -43,6 +43,7 @@ export function PosProducts({
   const [category, setCategory] = useState<CategoryKey>("all");
 
   const filtered = PRODUCTS.filter((item) => {
+    if (item.active === false) return false;
     const matchCategory = category === "all" || item.category === category;
     const q = query.trim().toLowerCase();
     const matchQuery = !q || item.name.toLowerCase().includes(q);
@@ -65,6 +66,7 @@ export function PosProducts({
               key={c.key}
               variant={category === c.key ? "primary" : "secondary"}
               size="small"
+              className="min-h-11"
               onClick={() => setCategory(c.key)}
             >
               {c.label}
@@ -89,6 +91,10 @@ export function PosProducts({
                   src="/products/contoh-coffee.jpeg"
                   alt={item.name}
                   className="size-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  width={320}
+                  height={240}
                 />
               </div>
               <div className="flex flex-col gap-2 pt-2">
@@ -104,11 +110,13 @@ export function PosProducts({
                     size="small"
                     iconOnly
                     leadingIcon={RiAddLine}
-                    className="min-h-11 min-w-11 lg:min-h-0 lg:min-w-0"
+                    className="min-h-11 min-w-11"
                     aria-label={`Tambah ${item.name}`}
+                    disabled={item.available === false}
                     onClick={() => onAdd(item)}
                   />
                 </div>
+                {item.available === false && <span className="text-body-2-medium text-text-tertiary">Habis</span>}
               </div>
             </div>
           ))}

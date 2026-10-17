@@ -30,6 +30,7 @@ import { CloseButton } from "@/components/base/buttons/close-button";
 import { Kbd } from "@/components/base/kbd/kbd";
 import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
 import { cx } from "@/utils/cx";
+import { useSidebarWheelLock } from "@/hooks/use-sidebar-wheel-lock";
 import { DashboardTeamMenu } from "./dashboard-team-menu";
 import { DashboardUserMenu } from "./dashboard-user-menu";
 
@@ -279,6 +280,7 @@ export function DashboardSidebar({
 } = {}) {
 	const localize = useTemplateCopy();
 	const [collapsedState, setCollapsed] = useState(defaultCollapsed);
+	const sidebarRef = useSidebarWheelLock(!mobile);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [suppressUserHover, setSuppressUserHover] = useState(false);
 	const [searchActive, setSearchActive] = useState(false);
@@ -345,6 +347,7 @@ export function DashboardSidebar({
 
 	return localize(
 		<aside
+			ref={sidebarRef}
 			className={cx(
 				"flex h-full shrink-0 flex-col justify-between overflow-hidden",
 				flat

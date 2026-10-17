@@ -29,6 +29,7 @@ import { CloseButton } from "@/components/base/buttons/close-button";
 import { Kbd } from "@/components/base/kbd/kbd";
 import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
 import { cx } from "@/utils/cx";
+import { useSidebarWheelLock } from "@/hooks/use-sidebar-wheel-lock";
 import { DashboardTeamMenu } from "../dashboard/dashboard-team-menu";
 import { DashboardUserMenu } from "../dashboard/dashboard-user-menu";
 
@@ -274,6 +275,7 @@ export function PosSidebar({
 } = {}) {
 	const localize = useTemplateCopy();
 	const [collapsedState, setCollapsed] = useState(defaultCollapsed);
+	const sidebarRef = useSidebarWheelLock(!mobile);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [suppressUserHover, setSuppressUserHover] = useState(false);
 	const [searchActive, setSearchActive] = useState(false);
@@ -340,6 +342,7 @@ export function PosSidebar({
 
 	return localize(
 		<aside
+			ref={sidebarRef}
 			className={cx(
 				"flex h-full shrink-0 flex-col justify-between overflow-hidden",
 				"bg-linear-to-r from-accent-500 to-accent-600 shadow-[0_0_0_1px_var(--color-accent-500),inset_1px_0_0_0_rgba(255,255,255,0.25)]",
