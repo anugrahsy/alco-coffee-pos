@@ -1,448 +1,481 @@
 "use client";
 
-import { useState, type ComponentType } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import {
-  RiCakeLine,
-  RiCupLine,
-  RiEyeLine,
-  RiFileList3Line,
-  RiMore2Fill,
-  RiPrinterLine,
-  RiReceiptLine,
-  RiSearchLine,
-  RiShoppingBagLine,
-  RiStore2Line,
+	RiEyeLine,
+	RiMore2Fill,
+	RiPrinterLine,
+	RiReceiptLine,
+	RiRefreshLine,
+	RiSearchLine,
+	RiShoppingBagLine,
+	RiStore2Line,
 } from "@remixicon/react";
+import { Fullscreen } from "lucide-react";
 import { Chip } from "@/components/base/badges/chip";
 import { StatusDot } from "@/components/base/badges/status-dot";
-import { CloseButton } from "@/components/base/buttons/close-button";
+import { Button } from "@/components/base/buttons/button";
 import { IconButton } from "@/components/base/buttons/icon-button";
 import {
-  Dropdown,
-  DropdownItem,
-  DropdownPopover,
-  DropdownTrigger,
+	Dropdown,
+	DropdownItem,
+	DropdownPopover,
+	DropdownTrigger,
 } from "@/components/base/dropdown/dropdown";
 import { Input } from "@/components/base/input/input";
 import { Pagination } from "@/components/base/pagination/pagination";
 import { Select, SelectItem } from "@/components/base/select/select";
+import {
+	Table,
+	TableBody,
+	TableCell,
+	TableColumn,
+	TableHeader,
+	TableRow,
+} from "@/components/base/table/table";
 import { cx } from "@/utils/cx";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@/components/base/table/table";
+	orderUnits,
+	PAYMENT_LABELS,
+	STATUS_LABELS,
+	SALES_PRODUCTS,
+	SALES_CASHIERS,
+	SALES_PAGE_SIZE,
+	salesDate,
+	salesTime,
+	salesMoney,
+	salesNumber,
+	salesPage,
+	type SalesOrder,
+	type SalesSearch,
+	type SalesMethod,
+} from "@/features/sales/sales-demo";
 
-/* ---------------------------------------------------------------------------
- * Tabel transaksi penjualan. Kolom: ID Transaksi, Tanggal, Total (rupiah),
- * Pembayaran, Waktu, Jumlah Item (klik → modal detail pesanan), Jenis Pesanan.
- * Pembayaran diwarnai: Tunai hijau, QRIS biru, Transfer kuning.
- * ------------------------------------------------------------------------- */
-
-type PaymentMethod = "Tunai" | "QRIS" | "Transfer";
-type OrderType = "Dine In" | "Take Away";
-
-type IconComponent = ComponentType<{
-  className?: string;
-  "aria-hidden"?: boolean | "true" | "false";
-}>;
-
-interface OrderItem {
-  name: string;
-  qty: number;
-  subtotal: string;
-  icon: IconComponent;
-}
-
-interface TransactionRow {
-  id: string;
-  date: string;
-  time: string;
-  total: string;
-  method: PaymentMethod;
-  orderType: OrderType;
-  items: OrderItem[];
-  /** Total di atas Rp 100.000 — ditandai warna status. */
-  highValue?: boolean;
-}
-
-const PAYMENT_CHIP: Record<PaymentMethod, "lime" | "blue" | "yellow"> = {
-  Tunai: "lime",
-  QRIS: "blue",
-  Transfer: "yellow",
+const PAYMENT_CHIP: Record<SalesMethod, "lime" | "blue" | "yellow"> = {
+	cash: "lime",
+	qris_manual: "blue",
+	bank_transfer_manual: "yellow",
 };
 
-const ORDER_TYPE_ICON: Record<OrderType, IconComponent> = {
-  "Dine In": RiStore2Line,
-  "Take Away": RiShoppingBagLine,
-};
+/** Ringkasan item pesanan: "Espresso × 2, Nasi Bowl × 3". */
+const itemSummary = (order: SalesOrder) =>
+	order.items.map((item) => `${item.name} × ${item.quantity}`).join(", ");
 
-const ORDER_TYPE_COLOR: Record<OrderType, string> = {
-  "Dine In": "text-status-lime-text",
-  "Take Away": "text-status-orange-text",
-};
-
-const TRANSACTION_ROWS: TransactionRow[] = [
-  {
-    id: "#COF123",
-    date: "Sep 05, 2026",
-    time: "09:30",
-    total: "Rp 135.000",
-    highValue: true,
-    method: "Tunai",
-    orderType: "Dine In",
-    items: [
-      { name: "Espresso", qty: 2, subtotal: "Rp 60.000", icon: RiCupLine },
-      { name: "Croissant", qty: 1, subtotal: "Rp 75.000", icon: RiCakeLine },
-    ],
-  },
-  {
-    id: "#COF124",
-    date: "Sep 05, 2026",
-    time: "10:15",
-    total: "Rp 92.000",
-    method: "QRIS",
-    orderType: "Take Away",
-    items: [
-      { name: "Caffe Latte", qty: 2, subtotal: "Rp 64.000", icon: RiCupLine },
-      { name: "Pain au Chocolat", qty: 1, subtotal: "Rp 28.000", icon: RiCakeLine },
-    ],
-  },
-  {
-    id: "#COF125",
-    date: "Sep 05, 2026",
-    time: "11:00",
-    total: "Rp 58.000",
-    method: "Transfer",
-    orderType: "Dine In",
-    items: [
-      { name: "Espresso", qty: 1, subtotal: "Rp 30.000", icon: RiCupLine },
-      { name: "Cookies", qty: 2, subtotal: "Rp 28.000", icon: RiCakeLine },
-    ],
-  },
-  {
-    id: "#COF126",
-    date: "Sep 05, 2026",
-    time: "12:40",
-    total: "Rp 210.000",
-    highValue: true,
-    method: "QRIS",
-    orderType: "Dine In",
-    items: [
-      { name: "Nasi Bowl", qty: 3, subtotal: "Rp 150.000", icon: RiStore2Line },
-      { name: "Ice Tea", qty: 3, subtotal: "Rp 60.000", icon: RiCupLine },
-    ],
-  },
-  {
-    id: "#COF127",
-    date: "Sep 05, 2026",
-    time: "14:05",
-    total: "Rp 45.000",
-    method: "Tunai",
-    orderType: "Take Away",
-    items: [
-      { name: "Americano", qty: 1, subtotal: "Rp 20.000", icon: RiCupLine },
-      { name: "Croissant", qty: 1, subtotal: "Rp 25.000", icon: RiCakeLine },
-    ],
-  },
-  {
-    id: "#COF128",
-    date: "Sep 05, 2026",
-    time: "15:20",
-    total: "Rp 128.000",
-    highValue: true,
-    method: "Transfer",
-    orderType: "Take Away",
-    items: [
-      { name: "Caffe Latte", qty: 2, subtotal: "Rp 64.000", icon: RiCupLine },
-      { name: "Cheese Cake", qty: 1, subtotal: "Rp 64.000", icon: RiCakeLine },
-    ],
-  },
-  {
-    id: "#COF129",
-    date: "Sep 05, 2026",
-    time: "16:45",
-    total: "Rp 74.000",
-    method: "QRIS",
-    orderType: "Dine In",
-    items: [
-      { name: "Hot Chocolate", qty: 1, subtotal: "Rp 32.000", icon: RiCupLine },
-      { name: "Tiramisu", qty: 1, subtotal: "Rp 42.000", icon: RiCakeLine },
-    ],
-  },
-  {
-    id: "#COF130",
-    date: "Sep 05, 2026",
-    time: "17:30",
-    total: "Rp 160.000",
-    highValue: true,
-    method: "Tunai",
-    orderType: "Dine In",
-    items: [
-      { name: "Espresso", qty: 2, subtotal: "Rp 60.000", icon: RiCupLine },
-      { name: "Nasi Bowl", qty: 2, subtotal: "Rp 100.000", icon: RiStore2Line },
-    ],
-  },
-];
-
-/** Label jenis pesanan dengan ikon berwarna (Dine In / Take Away). */
-function OrderTypeLabel({ type }: { type: OrderType }) {
-  const Icon = ORDER_TYPE_ICON[type];
-  return (
-    <span className="inline-flex items-center gap-2 text-body-medium text-text-primary">
-      <Icon className={cx("size-4", ORDER_TYPE_COLOR[type])} aria-hidden />
-      {type}
-    </span>
-  );
-}
-
-const ICON_BUTTON_TRIGGER =
-  "inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-2lg border border-border-button-default bg-background-primary-default text-foreground-icon-primary shadow-xs transition-[background-color,border-color,box-shadow,color] duration-150 ease outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus-ring hover:bg-background-primary-hover hover:border-border-button-hover active:bg-background-primary-active active:border-border-button-active";
-
-/** Menu "..." per baris: aksi lain (lihat struk, cetak ulang). */
-function MoreMenu({ row }: { row: TransactionRow }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Dropdown isOpen={open} onOpenChange={setOpen}>
-      <DropdownTrigger className={ICON_BUTTON_TRIGGER}>
-        <RiMore2Fill className="size-4" aria-hidden />
-      </DropdownTrigger>
-      <DropdownPopover
-        aria-label={`Aksi ${row.id}`}
-        placement="bottom end"
-        className="w-[160px]"
-      >
-        <DropdownItem onSelect={() => setOpen(false)}>
-          <RiReceiptLine className="size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
-          <span className="text-body-medium">Lihat Struk</span>
-        </DropdownItem>
-        <DropdownItem onSelect={() => setOpen(false)}>
-          <RiPrinterLine className="size-4 shrink-0 text-foreground-icon-secondary" aria-hidden />
-          <span className="text-body-medium">Cetak Ulang</span>
-        </DropdownItem>
-      </DropdownPopover>
-    </Dropdown>
-  );
-}
-
-/** Warna titik jumlah item: 1 indigo (basic), 2 hijau, 3+ kuning. */
-function itemCountDotColor(count: number): "green" | "yellow" | "indigo" {
-  if (count <= 1) return "indigo";
-  if (count === 2) return "green";
-  return "yellow";
-}
-
-/** Total sebagai chip. Order di atas Rp 100.000 ditandai warna status-lime. */
-function TotalChip({ value, highValue }: { value: string; highValue?: boolean }) {
-  return (
-    <span
-      className={cx(
-        "inline-flex items-center justify-center rounded-md px-1.5 py-1 whitespace-nowrap text-body-medium",
-        highValue
-          ? "bg-status-lime-background text-status-lime-text"
-          : "bg-background-secondary-default text-text-primary",
-      )}
-    >
-      {value}
-    </span>
-  );
-}
-
-/** Modal daftar item pesanan. Terbuka saat klik "N Item" pada kolom Jumlah Item. */
-function OrderItemsModal({
-  order,
-  onClose,
+/** Potong ke maks karakter (elipsis ikut dihitung): "Espresso × 2, Na…". */
+const clipText = (value: string, max = 17) =>
+	value.length <= max ? value : `${value.slice(0, max - 1).trimEnd()}…`;
+function MoreMenu({
+	order,
+	onDetail,
+	onPrint,
 }: {
-  order: TransactionRow | null;
-  onClose: () => void;
+	order: SalesOrder;
+	onDetail: () => void;
+	onPrint: () => void;
 }) {
-  if (!order) return null;
-
-  return createPortal(
-    <div
-      className="fixed inset-0 z-100 flex items-center justify-center p-4"
-      role="presentation"
-    >
-      <button
-        type="button"
-        aria-label="Tutup detail pesanan"
-        tabIndex={-1}
-        onClick={onClose}
-        className="absolute inset-0 cursor-default bg-black/70"
-      />
-      <div className="relative w-full max-w-md rounded-3xl border border-border-button-default bg-background-primary-default p-6 shadow-dropdown">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h2 className="text-title-3-semibold text-text-primary">Detail Pesanan</h2>
-            <p className="mt-1 text-body-2-regular text-text-secondary">{order.id}</p>
-          </div>
-          <CloseButton size="md" aria-label="Tutup" onClick={onClose} />
-        </div>
-
-        <ul className="mt-4 flex flex-col gap-1">
-          {order.items.map((item) => (
-            <li key={item.name} className="flex items-center gap-3 rounded-2lg px-2 py-2">
-              <item.icon className="size-5 shrink-0 text-foreground-icon-secondary" aria-hidden />
-              <span className="min-w-0 flex-1 truncate text-body-medium text-text-primary">
-                {item.name}
-              </span>
-              <span className="text-body-2-regular text-text-secondary">x{item.qty}</span>
-              <span className="text-body-medium text-text-primary">{item.subtotal}</span>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mt-4 flex items-center justify-between border-t border-separator-border pt-3">
-          <span className="text-body-medium text-text-secondary">Total</span>
-          <span className="text-body-medium text-text-primary">{order.total}</span>
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
+	const [open, setOpen] = useState(false);
+	return (
+		<Dropdown isOpen={open} onOpenChange={setOpen}>
+			<DropdownTrigger
+				aria-label={`Aksi ${order.number}`}
+				className="inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-2lg border border-border-button-default bg-background-primary-default text-foreground-icon-primary shadow-xs outline-none hover:bg-background-primary-hover focus-visible:ring-2 focus-visible:ring-border-focus-ring max-sm:min-h-11 max-sm:min-w-11"
+			>
+				<RiMore2Fill className="size-4" aria-hidden />
+			</DropdownTrigger>
+			<DropdownPopover
+				aria-label={`Aksi ${order.number}`}
+				placement="bottom end"
+				className="w-36"
+			>
+				<DropdownItem
+					onSelect={() => {
+						setOpen(false);
+						onDetail();
+					}}
+				>
+					<RiReceiptLine
+						className="size-4 shrink-0 text-foreground-icon-secondary"
+						aria-hidden
+					/>
+					<span>Lihat Detail</span>
+				</DropdownItem>
+				{order.status !== "cancelled" && (
+					<DropdownItem
+						onSelect={() => {
+							setOpen(false);
+							onPrint();
+						}}
+					>
+						<RiPrinterLine
+							className="size-4 shrink-0 text-foreground-icon-secondary"
+							aria-hidden
+						/>
+						<span>Struk</span>
+					</DropdownItem>
+				)}
+			</DropdownPopover>
+		</Dropdown>
+	);
 }
 
-export function TransactionsTable() {
-  const [page, setPage] = useState(1);
-  const [selectedOrder, setSelectedOrder] = useState<TransactionRow | null>(null);
-  const [paymentFilter, setPaymentFilter] = useState("all");
-  const [orderFilter, setOrderFilter] = useState("all");
-
-  const rows = TRANSACTION_ROWS.filter(
-    (row) =>
-      (paymentFilter === "all" || row.method === paymentFilter) &&
-      (orderFilter === "all" || row.orderType === orderFilter),
-  );
-
-  return (
-    <section className="flex min-w-0 w-full flex-col rounded-2xl border border-border-button-default px-0.5 pb-3 pt-2">
-      <div className="flex min-h-14 flex-wrap items-center justify-between gap-3 px-3 py-1">
-        <div className="flex h-10 flex-col justify-center">
-          <span className="text-body-medium text-text-tertiary">Total Transaksi</span>
-          <span className="text-body-medium text-text-primary">660 transaksi</span>
-        </div>
-        <div className="flex max-w-full flex-wrap items-center justify-end gap-2.5">
-          <Select
-            aria-label="Filter pembayaran"
-            defaultSelectedKey="all"
-            onSelectionChange={(key) => setPaymentFilter(String(key))}
-          >
-            <SelectItem id="all">Semua Pembayaran</SelectItem>
-            <SelectItem id="Tunai">Tunai</SelectItem>
-            <SelectItem id="QRIS">QRIS</SelectItem>
-            <SelectItem id="Transfer">Transfer</SelectItem>
-          </Select>
-          <Select
-            aria-label="Filter pesanan"
-            defaultSelectedKey="all"
-            onSelectionChange={(key) => setOrderFilter(String(key))}
-          >
-            <SelectItem id="all">Semua Pesanan</SelectItem>
-            <SelectItem id="Dine In">Dine In</SelectItem>
-            <SelectItem id="Take Away">Take Away</SelectItem>
-          </Select>
-          <Input
-            placeholder="Search"
-            aria-label="Search transaksi"
-            leadingIcon={RiSearchLine}
-            className="min-w-[153px] flex-1 sm:w-[153px] sm:min-w-0 sm:flex-none"
-            fieldClassName="rounded-full bg-background-secondary-default"
-            inputClassName="text-body-medium"
-          />
-        </div>
-      </div>
-
-      <Table aria-label="Transaksi" className="min-w-[1080px]">
-        <TableHeader>
-          <TableColumn id="id" isRowHeader className="w-[140px]">
-            ID Transaksi
-          </TableColumn>
-          <TableColumn id="date" className="w-[140px]">
-            Tanggal
-          </TableColumn>
-          <TableColumn id="time" className="w-[100px]">
-            Waktu
-          </TableColumn>
-          <TableColumn id="items" className="w-[150px]">
-            Jumlah Item
-          </TableColumn>
-          <TableColumn id="total" className="w-[140px]">
-            Total
-          </TableColumn>
-          <TableColumn id="method" className="w-[130px]">
-            Pembayaran
-          </TableColumn>
-          <TableColumn id="orderType" className="w-[150px]">
-            Jenis Pesanan
-          </TableColumn>
-          <TableColumn id="actions" className="w-[120px]">
-            Actions
-          </TableColumn>
-        </TableHeader>
-        <TableBody>
-          {rows.map((row) => (
-            <TableRow key={row.id} id={row.id}>
-              <TableCell>
-                <span className="whitespace-nowrap">{row.id}</span>
-              </TableCell>
-              <TableCell>
-                <span className="whitespace-nowrap">{row.date}</span>
-              </TableCell>
-              <TableCell>
-                <span className="whitespace-nowrap">{row.time}</span>
-              </TableCell>
-              <TableCell>
-                <button
-                  type="button"
-                  aria-label={`Lihat item ${row.id}`}
-                  onClick={() => setSelectedOrder(row)}
-                  className="flex w-full cursor-pointer items-center justify-between gap-1.5 rounded-2lg border border-border-button-default bg-background-primary-default px-2.5 py-2 text-body-medium text-text-primary shadow-xs transition-[background-color,border-color,box-shadow] duration-200 ease hover:bg-background-primary-hover hover:border-border-button-hover outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-border-focus-ring disabled:cursor-not-allowed disabled:bg-background-primary-disabled disabled:text-text-tertiary disabled:shadow-none"
-                >
-                  <span className="flex min-w-0 items-center truncate">
-                    <span className="flex items-center gap-1.25">
-                      <StatusDot color={itemCountDotColor(row.items.length)} />
-                      {row.items.length} Item
-                    </span>
-                  </span>
-                  <RiFileList3Line className="size-4 shrink-0 text-text-secondary" aria-hidden />
-                </button>
-              </TableCell>
-              <TableCell>
-                <TotalChip value={row.total} highValue={row.highValue} />
-              </TableCell>
-              <TableCell>
-                <Chip variant="bold" color={PAYMENT_CHIP[row.method]}>
-                  {row.method}
-                </Chip>
-              </TableCell>
-              <TableCell>
-                <OrderTypeLabel type={row.orderType} />
-              </TableCell>
-              <TableCell>
-                <div className="flex items-center justify-end gap-2">
-                  <IconButton
-                    icon={RiEyeLine}
-                    size="small"
-                    aria-label={`Lihat detail ${row.id}`}
-                    onClick={() => setSelectedOrder(row)}
-                  />
-                  <MoreMenu row={row} />
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-
-      <div className="mt-3 px-3">
-        <Pagination page={page} totalPages={55} onChange={setPage} />
-      </div>
-
-      <OrderItemsModal order={selectedOrder} onClose={() => setSelectedOrder(null)} />
-    </section>
-  );
+export function TransactionsTable({
+	rows,
+	search,
+	onSearch,
+	onDetail,
+	onPrint,
+	onReset,
+}: {
+	rows: SalesOrder[];
+	search: SalesSearch;
+	onSearch: (patch: Partial<SalesSearch>) => void;
+	onDetail: (id: string) => void;
+	onPrint: (order: SalesOrder) => void;
+	onReset: () => void;
+}) {
+	const paged = salesPage(rows, search.page);
+	const tableRef = useRef<HTMLTableElement>(null);
+	useEffect(() => {
+		tableRef.current?.parentElement?.scrollTo({ left: 0 });
+	}, [
+		search.q,
+		search.method,
+		search.type,
+		search.status,
+		search.cashier,
+		search.product,
+		search.period,
+		search.from,
+		search.to,
+	]);
+	const filterClass = "min-w-0 max-w-44 shrink-0";
+	return (
+		<section
+			aria-label="Daftar transaksi"
+			className="flex w-full min-w-0 flex-col rounded-2xl border border-border-button-default px-0.5 pb-3 pt-2"
+		>
+			<div className="flex min-h-14 flex-col gap-3 px-3 py-1 xl:flex-row xl:items-center xl:justify-between">
+				<div className="flex shrink-0 flex-col justify-center">
+					<span className="text-body-medium text-text-tertiary">
+						Total Transaksi
+					</span>
+					<span
+						aria-live="polite"
+						className="text-body-medium text-text-primary"
+					>
+						{salesNumber(rows.length)} transaksi
+					</span>
+				</div>
+				<div className="flex w-full min-w-0 flex-wrap items-center gap-2 xl:flex-1 xl:justify-end">
+					<Select
+						aria-label="Filter pembayaran"
+						className={filterClass}
+						selectedKey={search.method}
+						onSelectionChange={(key) => onSearch({ method: String(key) })}
+						renderValue="Metode"
+					>
+						<SelectItem id="all">Semua</SelectItem>
+						{Object.entries(PAYMENT_LABELS).map(([id, label]) => (
+							<SelectItem key={id} id={id}>
+								{label}
+							</SelectItem>
+						))}
+					</Select>
+					<Select
+						aria-label="Filter pesanan"
+						className={filterClass}
+						selectedKey={search.type}
+						onSelectionChange={(key) => onSearch({ type: String(key) })}
+						renderValue="Jenis"
+					>
+						<SelectItem id="all">Semua</SelectItem>
+						<SelectItem id="Dine In">Dine In</SelectItem>
+						<SelectItem id="Take Away">Take Away</SelectItem>
+					</Select>
+					<Select
+						aria-label="Filter status"
+						className={filterClass}
+						selectedKey={search.status}
+						onSelectionChange={(key) =>
+							onSearch({
+								status: String(key),
+								method: String(key) === "unpaid" ? "all" : search.method,
+							})
+						}
+						renderValue="Status"
+					>
+						<SelectItem id="sales">Lunas + Refund</SelectItem>
+						<SelectItem id="all">Semua</SelectItem>
+						{Object.entries(STATUS_LABELS).map(([id, label]) => (
+							<SelectItem key={id} id={id}>
+								{label}
+							</SelectItem>
+						))}
+					</Select>
+					<Select
+						aria-label="Filter kasir"
+						className={filterClass}
+						selectedKey={search.cashier}
+						onSelectionChange={(key) => onSearch({ cashier: String(key) })}
+						renderValue="Kasir"
+					>
+						<SelectItem id="all">Semua</SelectItem>
+						{SALES_CASHIERS.map((name) => (
+							<SelectItem key={name} id={name}>
+								{name}
+							</SelectItem>
+						))}
+					</Select>
+					<Select
+						aria-label="Pesanan berisi produk"
+						className={filterClass}
+						selectedKey={search.product}
+						onSelectionChange={(key) => onSearch({ product: String(key) })}
+						renderValue="Produk"
+					>
+						<SelectItem id="all">Semua</SelectItem>
+						{SALES_PRODUCTS.map((p) => (
+							<SelectItem key={p.id} id={p.id}>
+								{p.name}
+							</SelectItem>
+						))}
+					</Select>
+					<div className="flex w-full min-w-0 items-center gap-2 sm:w-auto sm:shrink-0">
+						<Button
+							variant="secondary"
+							size="medium"
+							leadingIcon={RiRefreshLine}
+							onClick={onReset}
+							className="max-sm:min-h-11"
+						>
+							Reset
+						</Button>
+						<Input
+							placeholder="Cari transaksi…"
+							aria-label="Cari transaksi"
+							leadingIcon={RiSearchLine}
+							value={search.q}
+							onChange={(q) => onSearch({ q })}
+							maxLength={120}
+							className="min-w-0 flex-1 sm:w-56 sm:flex-none"
+							fieldClassName="rounded-full bg-background-secondary-default"
+							inputClassName="text-body-medium"
+						/>
+					</div>
+				</div>
+			</div>
+			{(search.status === "unpaid" || search.status === "all") && (
+				<p className="px-3 pb-2 text-body-2-regular text-text-tertiary">
+					Belum Dibayar: saat ini — semua tanggal; tanggal yang ditampilkan
+					adalah tanggal dibuat. Unpaid/cancelled tidak menambah penjualan.
+				</p>
+			)}
+			{search.product !== "all" && (
+				<p className="px-3 pb-2 text-body-2-regular text-text-tertiary">
+					Filter produk menampilkan pesanan yang memuat produk tersebut; nominal
+					dan rekap tetap mencakup seluruh item pesanan.
+				</p>
+			)}
+			<Table
+				ref={tableRef}
+				aria-label="Transaksi Penjualan"
+				className="min-w-[1320px]"
+				selectionMode="none"
+			>
+				<TableHeader>
+					<TableColumn id="number" isRowHeader className="w-56">
+						ID Transaksi
+					</TableColumn>
+					<TableColumn id="date" className="w-36">
+						Waktu bayar · WIB
+					</TableColumn>
+					<TableColumn id="cashier" className="w-24">
+						Kasir
+					</TableColumn>
+					<TableColumn id="items" className="w-48">
+						Jumlah Item
+					</TableColumn>
+					<TableColumn id="total" className="w-36">
+						Total asli
+					</TableColumn>
+					<TableColumn id="method" className="w-40">
+						Pembayaran
+					</TableColumn>
+					<TableColumn id="type" className="w-36">
+						Jenis Pesanan
+					</TableColumn>
+					<TableColumn id="status" className="w-36">
+						Status
+					</TableColumn>
+					<TableColumn id="actions" className="w-24">
+						Aksi
+					</TableColumn>
+				</TableHeader>
+				<TableBody
+					renderEmptyState={() => (
+						<div className="flex flex-col items-start gap-2 p-4">
+							<p className="text-body-medium text-text-secondary">
+								Tidak ada transaksi yang sesuai filter.
+							</p>
+							<Button
+								variant="secondary"
+								size="medium"
+								leadingIcon={RiRefreshLine}
+								onClick={onReset}
+								className="max-sm:min-h-11"
+							>
+								Reset
+							</Button>
+						</div>
+					)}
+				>
+					{paged.rows.map((order) => {
+						const units = orderUnits(order);
+						const Icon =
+							order.orderType === "Dine In" ? RiStore2Line : RiShoppingBagLine;
+						return (
+							<TableRow key={order.id} id={order.id}>
+								<TableCell>
+									<div className="flex flex-col gap-1">
+										<span className="whitespace-nowrap">{order.number}</span>
+										<span className="text-body-2-regular text-text-tertiary">
+											{order.label}
+										</span>
+									</div>
+								</TableCell>
+								<TableCell>
+									<div className="flex flex-col gap-1">
+										<span className="whitespace-nowrap">
+											{salesDate(order.paidAt ?? order.createdAt)}
+										</span>
+										<span className="text-body-2-regular text-text-tertiary">
+											{salesTime(order.paidAt ?? order.createdAt)} WIB
+											{!order.paidAt && " · dibuat"}
+										</span>
+										{order.refund && (
+											<span className="text-caption-1-medium text-text-tertiary">
+												Refund {salesDate(order.refund.at)}
+											</span>
+										)}
+									</div>
+								</TableCell>
+								<TableCell>{order.cashier}</TableCell>
+								<TableCell>
+									<Button
+										variant="secondary"
+										size="small"
+										trailingIcon={Fullscreen}
+										aria-label={`Lihat item ${order.number}`}
+										className="w-28 justify-between max-sm:min-h-11"
+										onClick={() => onDetail(order.id)}
+									>
+										<span className="flex items-center gap-1.5">
+											<StatusDot
+												color={
+													units <= 1
+														? "indigo"
+														: units <= 3
+															? "green"
+															: "yellow"
+												}
+											/>
+											{units} Item
+										</span>
+									</Button>
+									<p
+										title={itemSummary(order)}
+										className="mt-1 max-w-44 truncate text-caption-1-medium text-text-tertiary"
+									>
+										{clipText(itemSummary(order))}
+									</p>
+								</TableCell>
+								<TableCell>
+									<span
+										className={cx(
+											"inline-flex whitespace-nowrap rounded-md px-1.5 py-1 text-body-medium tabular-nums",
+											order.total > 100000
+												? "bg-status-lime-background text-status-lime-text"
+												: "bg-background-secondary-default text-text-primary",
+										)}
+									>
+										{salesMoney(order.total)}
+									</span>
+								</TableCell>
+								<TableCell>
+									{order.method ? (
+										<Chip variant="bold" color={PAYMENT_CHIP[order.method]}>
+											{PAYMENT_LABELS[order.method]}
+										</Chip>
+									) : (
+										<span className="text-text-tertiary">—</span>
+									)}
+								</TableCell>
+								<TableCell>
+									<span className="inline-flex items-center gap-2 whitespace-nowrap">
+										<Icon
+											className={cx(
+												"size-4 shrink-0",
+												order.orderType === "Dine In"
+													? "text-status-lime-text"
+													: "text-status-orange-text",
+											)}
+											aria-hidden
+										/>
+										{order.orderType}
+									</span>
+								</TableCell>
+								<TableCell>
+									<Chip
+										variant="bold"
+										color={
+											order.status === "paid"
+												? "lime"
+												: order.status === "refunded"
+													? "rose"
+													: order.status === "unpaid"
+														? "yellow"
+														: "neutral"
+										}
+									>
+										{STATUS_LABELS[order.status]}
+									</Chip>
+								</TableCell>
+								<TableCell>
+									<div className="flex items-center justify-end gap-2">
+										<IconButton
+											icon={RiEyeLine}
+											size="small"
+											className="max-sm:min-h-11 max-sm:min-w-11"
+											aria-label={`Lihat detail ${order.number}`}
+											onClick={() => onDetail(order.id)}
+										/>
+										<MoreMenu
+											order={order}
+											onDetail={() => onDetail(order.id)}
+											onPrint={() => onPrint(order)}
+										/>
+									</div>
+								</TableCell>
+							</TableRow>
+						);
+					})}
+				</TableBody>
+			</Table>
+			<div className="mt-3 flex flex-col gap-3 px-3">
+				<p className="text-body-2-regular text-text-tertiary">
+					{rows.length
+						? `Menampilkan ${(paged.page - 1) * SALES_PAGE_SIZE + 1}–${Math.min(paged.page * SALES_PAGE_SIZE, rows.length)} dari ${salesNumber(rows.length)} transaksi`
+						: "0 transaksi"}
+				</p>
+				<Pagination
+					page={paged.page}
+					totalPages={paged.pages}
+					onChange={(page) => onSearch({ page })}
+					previousLabel="Sebelumnya"
+					nextLabel="Berikutnya"
+					aria-label="Halaman transaksi"
+				/>
+			</div>
+		</section>
+	);
 }

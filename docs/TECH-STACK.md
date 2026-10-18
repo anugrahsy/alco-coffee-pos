@@ -52,7 +52,7 @@ npm run dev
 npx boardui@latest add <nama-komponen-free-terverifikasi>
 ```
 
-> Versi paket mengikuti lockfile dan kompatibilitas TanStack Start/BoardUI. Tabel di atas juga memuat rencana integrasi; paket seperti Supabase, ExcelJS dan test runner belum otomatis terpasang. Jangan menjalankan CLI BoardUI dengan mengasumsikan template Pro termasuk paket Free.
+> Versi paket mengikuti lockfile dan kompatibilitas TanStack Start/BoardUI. Tabel di atas juga memuat rencana integrasi; Supabase dan test runner belum otomatis terpasang. ExcelJS sudah terpasang untuk ekspor Penjualan dan dimuat dinamis saat unduh; override `exceljs > uuid` ke 11.1.1 mempertahankan API CJS `v4` sambil menangani advisory transitive yang terdeteksi saat pemasangan. Jangan menjalankan CLI BoardUI dengan mengasumsikan template Pro termasuk paket Free.
 
 ### 1.2 Mengapa bukan Neon pada MVP?
 

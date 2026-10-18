@@ -6,11 +6,10 @@ import {
 	RiCloseLine,
 	RiCustomerServiceLine,
 	RiDashboardLine,
-	RiHomeLine,
+	RiPercentLine,
 	RiSearchLine,
 	RiSettings4Line,
 	RiShoppingBag3Line,
-	RiSideBarFill,
 	RiStore2Line,
 } from "@remixicon/react";
 
@@ -26,7 +25,6 @@ import { DeferredSettingsModal as SettingsModal, preloadSettingsModal } from "@/
 import { ThemeToggle } from "@/components/application/theme/theme-toggle";
 import { Badge } from "@/components/base/badges/badge";
 import { CloseButton } from "@/components/base/buttons/close-button";
-import { Kbd } from "@/components/base/kbd/kbd";
 import { useTemplateCopy } from "@/components/foundations/template-copy/template-copy";
 import { cx } from "@/utils/cx";
 import { useSidebarWheelLock } from "@/hooks/use-sidebar-wheel-lock";
@@ -126,14 +124,14 @@ function NavItem({
 			className={cx(
 				"flex items-center justify-between overflow-hidden rounded-2lg p-2",
 				"transition-[width,background-color] duration-300 ease-in-out",
-				collapsed ? "w-9" : "w-full",
+				collapsed ? "w-10" : "w-full",
 				isSelected ? "bg-white/20" : "hover:bg-white/10",
 			)}
 		>
 			<span className="flex min-w-0 items-center gap-2">
 				<Icon
 					className={cx(
-						"size-5 shrink-0",
+						"size-6 shrink-0",
 						isSelected ? "text-white" : "text-white/70",
 					)}
 					aria-hidden
@@ -168,20 +166,21 @@ export type DashboardNavKey = string;
 
 /** The Pro dashboard's navigation, the default set. */
 export const DASHBOARD_NAV: DashboardNavItem[] = [
-	{ key: "monitor", label: "Monitor", icon: RiDashboardLine, href: "/monitor" },
+	{ key: "kasir", label: "Pos", icon: RiStore2Line, href: "/pos" },
 	{
-		key: "home",
-		label: "Home",
-		icon: RiHomeLine,
-		href: "/dashboard",
-		badge: 152,
+		key: "simpan-pesanan",
+		label: "Simpan Pesanan",
+		icon: RiBookmark2Line,
+		href: "/pos?view=simpan-pesanan",
 	},
+	{ key: "monitor", label: "Monitor", icon: RiDashboardLine, href: "/pos?view=monitor" },
 	{
 		key: "penjualan",
 		label: "Penjualan",
 		icon: RiShoppingBag3Line,
-		href: "/penjualan",
+		href: "/pos?view=penjualan",
 	},
+	{ key: "promo", label: "Promo", icon: RiPercentLine, href: "/pos?view=promo" },
 ];
 
 /**
@@ -244,8 +243,8 @@ export function PosSidebar({
 	items = DASHBOARD_NAV,
 	flat = false,
 	defaultCollapsed = false,
-	onSelectKasir,
-	onSelectSavedOrders,
+	collapsed: controlledCollapsed,
+	onCollapseChange,
 	className,
 }: {
 	/** Rendered inside the mobile drawer: always expanded, close button instead of collapse. */
@@ -267,14 +266,14 @@ export function PosSidebar({
 	flat?: boolean;
 	/** Start collapsed (60px rail). Defaults to expanded. */
 	defaultCollapsed?: boolean;
-	/** Buka katalog produk (Kasir). */
-	onSelectKasir?: () => void;
-	/** Buka tampilan Simpan Pesanan (kalender). */
-	onSelectSavedOrders?: () => void;
+	/** Controlled collapse when a parent (e.g. POS header) owns the toggle. */
+	collapsed?: boolean;
+	/** Reports collapse changes back to the controlling parent. */
+	onCollapseChange?: (collapsed: boolean) => void;
 	className?: string;
 } = {}) {
 	const localize = useTemplateCopy();
-	const [collapsedState, setCollapsed] = useState(defaultCollapsed);
+	const [collapsedState, setCollapsedState] = useState(defaultCollapsed);
 	const sidebarRef = useSidebarWheelLock(!mobile);
 	const [settingsOpen, setSettingsOpen] = useState(false);
 	const [suppressUserHover, setSuppressUserHover] = useState(false);
@@ -283,7 +282,11 @@ export function PosSidebar({
 	const searchTriggerRef = useRef<HTMLButtonElement>(null);
 	const searchFieldRef = useRef<HTMLDivElement>(null);
 	const searchInputRef = useRef<HTMLInputElement>(null);
-	const collapsed = mobile ? false : collapsedState;
+	const collapsed = mobile ? false : (controlledCollapsed ?? collapsedState);
+	const setCollapsed = (next: boolean) => {
+		if (controlledCollapsed !== undefined) onCollapseChange?.(next);
+		else setCollapsedState(next);
+	};
 	const normalizedQuery = query.trim().toLocaleLowerCase();
 	const matches = (label: string) =>
 		label.toLocaleLowerCase().includes(normalizedQuery);
@@ -345,15 +348,15 @@ export function PosSidebar({
 			ref={sidebarRef}
 			className={cx(
 				"flex h-full shrink-0 flex-col justify-between overflow-hidden",
-				"bg-linear-to-r from-accent-500 to-accent-600 shadow-[0_0_0_1px_var(--color-accent-500),inset_1px_0_0_0_rgba(255,255,255,0.25)]",
+				"bg-linear-to-r from-accent-600 to-accent-500 shadow-[0_0_0_1px_var(--color-accent-600),inset_-2px_0_0_0_rgba(255,255,255,0.65)]",
 				"transition-[width] duration-300 ease-in-out",
 				// Collapsed rail keeps the 60px spec: 1px border + 11px padding on each
 				// side leaves an exactly 36px column so the w-9 (36px) icon items center.
 				collapsed
-					? "w-[60px] px-[11px] py-3"
+					? "w-[64px] px-[11px] py-3"
 					: fluid
-						? "w-full p-3 lg:w-[260px]"
-						: "w-[260px] p-3",
+						? "w-full p-3 lg:w-[300px]"
+						: "w-[300px] p-3",
 				className,
 			)}
 		>
@@ -370,7 +373,7 @@ export function PosSidebar({
 						"flex w-full transition-[gap] duration-300 ease-in-out",
 						collapsed
 							? "flex-col-reverse items-start justify-center gap-2.5"
-							: "flex-row items-center justify-between",
+							: "flex-row items-center justify-start gap-2",
 					)}
 				>
 					{/* The clip is here to hide the label as `max-width` animates shut,
@@ -455,105 +458,10 @@ export function PosSidebar({
 						>
 							<RiCloseLine className="size-5" aria-hidden />
 						</button>
-					) : (
-						<button
-							type="button"
-							aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-							aria-expanded={!collapsed}
-							onClick={() => {
-								const isExpanding = collapsedState;
-								if (!isExpanding) deactivateSearch(false);
-								setCollapsed(!collapsedState);
-								setSuppressUserHover(isExpanding);
-							}}
-							className={cx(
-								"cursor-pointer text-white/70 transition-transform duration-300 ease-in-out",
-								collapsed && "flex w-9 items-center justify-center",
-							)}
-						>
-							<RiSideBarFill
-								className={cx(
-									"size-5 transition-transform duration-300 ease-in-out",
-									collapsed
-										? "rtl:-scale-x-100"
-										: "-scale-x-100 rtl:scale-x-100",
-								)}
-								aria-hidden
-							/>
-						</button>
-					)}
+					) : null}
 				</div>
 
 				<div className="flex w-full flex-col gap-3">
-					{/* Quick search */}
-					{!flat &&
-						(searchActive && !collapsed ? (
-							<div
-								ref={searchFieldRef}
-								className="flex w-full items-center gap-2 rounded-full bg-white/10 py-2 pe-2.5 ps-2 ring-2 ring-inset ring-border-button-active transition-[background-color,box-shadow] duration-[var(--input-transition-ms)] ease"
-							>
-								<RiSearchLine
-									className="size-5 shrink-0 text-white/70"
-									aria-hidden
-								/>
-								<input
-									ref={searchInputRef}
-									type="search"
-									aria-label="Filter template navigation"
-									value={query}
-									onChange={(event) => setQuery(event.target.value)}
-									onKeyDown={(event) => {
-										if (event.key === "Escape") {
-											event.preventDefault();
-											deactivateSearch(true);
-										}
-									}}
-									placeholder="Search navigation…"
-									className="min-w-0 flex-1 bg-transparent text-body-medium text-white outline-none placeholder:text-white/60"
-								/>
-								<CloseButton
-									size="2xs"
-									aria-label="Clear navigation search"
-									onClick={() => deactivateSearch(true)}
-									className="bg-white/20"
-								/>
-							</div>
-						) : (
-							<button
-								ref={searchTriggerRef}
-								type="button"
-								aria-label="Quick Search"
-								title={collapsed ? "Quick Search" : undefined}
-								onClick={activateSearch}
-								className={cx(
-									"flex cursor-pointer items-center gap-2 p-2 hover:bg-white/10",
-									"transition-[width,border-radius,background-color] duration-300 ease-in-out",
-									collapsed
-										? "w-9 rounded-full bg-white/10"
-										: "w-full rounded-full bg-white/10",
-								)}
-							>
-								<span
-									className={cx(
-										"flex min-w-0 items-center gap-2",
-										!collapsed && "flex-1",
-									)}
-								>
-									<RiSearchLine
-										className="size-5 shrink-0 text-white/70"
-										aria-hidden
-									/>
-									<Collapsible collapsed={collapsed}>
-										<span className="text-body-medium whitespace-nowrap text-white/80">
-											Quick Search
-										</span>
-									</Collapsible>
-								</span>
-								<Collapsible collapsed={collapsed}>
-									<Kbd>⌘L</Kbd>
-								</Collapsible>
-							</button>
-						))}
 
 					{/* Primary nav. The 2px inset is for the expanded rail only: the
               collapsed column is exactly as wide as a 36px item, so padding
@@ -568,20 +476,6 @@ export function PosSidebar({
 							selected={selected}
 							collapsed={collapsed}
 							secondaryMatch={secondaryMatch}
-						/>
-						<NavItem
-							icon={RiStore2Line}
-							label="Kasir"
-							collapsed={collapsed}
-							isSelected={selected === "kasir"}
-							onClick={onSelectKasir}
-						/>
-						<NavItem
-							icon={RiBookmark2Line}
-							label="Simpan Pesanan"
-							collapsed={collapsed}
-							isSelected={selected === "simpan-pesanan"}
-							onClick={onSelectSavedOrders}
 						/>
 					</nav>
 				</div>

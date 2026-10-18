@@ -2,16 +2,26 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { RiCloseLine, RiMenuLine, RiShoppingBag3Line } from "@remixicon/react";
+import {
+	RiCloseLine,
+	RiMenuLine,
+	RiShoppingBag3Line,
+	RiSideBarFill,
+} from "@remixicon/react";
 import { PosSidebar } from "./pos-sidebar";
 import { PosProducts } from "./pos-products";
 import { PosCart } from "./pos-cart";
 import { PosSavedOrders } from "./pos-saved-orders";
 import { PosCheckout } from "./pos-checkout";
 import type { PosProduct } from "./pos-types";
+import { MonitorHome } from "@/components/application/dashboard/monitor-home";
+import { PenjualanHome } from "@/components/application/dashboard/penjualan-home";
+import { PromoHome } from "@/components/application/dashboard/promo-home";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
 import { ResponsiveDrawer } from "@/components/application/layout/responsive-drawer";
+import { parseSalesSearch, type SalesSearch } from "@/features/sales/sales-demo";
+import { parsePromoSearch, type PromoSearch } from "@/features/promo/promo-demo";
 import {
 	businessDate,
 	cancelDemoOrder,
@@ -37,6 +47,7 @@ export function PosLayout() {
 	const [message, setMessage] = useState("");
 	const [error, setError] = useState("");
 	const [menuOpen, setMenuOpen] = useState(false);
+	const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
 	const [cartOpen, setCartOpen] = useState(false);
 	const [checkoutOpen, setCheckoutOpen] = useState(false);
 	const [receipt, setReceipt] = useState<PosDemoOrder | null>(null);
@@ -47,7 +58,19 @@ export function PosLayout() {
 	const busy = useRef(false);
 	const navigate = useNavigate();
 	const { view } = useSearch({ from: "/_protected/pos" });
+	const [salesSearch, setSalesSearch] = useState<SalesSearch>(() =>
+		parseSalesSearch({}),
+	);
+	const [promoSearch, setPromoSearch] = useState<PromoSearch>(() => ({
+		...parsePromoSearch({}),
+		readonly: true,
+	}));
 	const showSaved = view === "simpan-pesanan";
+	const showMonitor = view === "monitor";
+	const showPenjualan = view === "penjualan";
+	const showPromo = view === "promo";
+	const isContentView =
+		showMonitor || showPenjualan || showPromo || showSaved;
 	const cart = draft.items;
 
 	useEffect(() => {
@@ -267,12 +290,9 @@ export function PosLayout() {
 		<div className="flex h-dvh overflow-hidden bg-background-full">
 			<div className="hidden h-full shrink-0 lg:block">
 				<PosSidebar
-					defaultCollapsed
-					selected={showSaved ? "simpan-pesanan" : "kasir"}
-					onSelectKasir={() => navigate({ to: "/pos", search: {} })}
-					onSelectSavedOrders={() =>
-						navigate({ to: "/pos", search: { view: "simpan-pesanan" } })
-					}
+					collapsed={sidebarCollapsed}
+					onCollapseChange={setSidebarCollapsed}
+					selected={view ?? "kasir"}
 				/>
 			</div>
 			<ResponsiveDrawer
@@ -283,67 +303,105 @@ export function PosLayout() {
 				<PosSidebar
 					mobile
 					fluid
-					selected={showSaved ? "simpan-pesanan" : "kasir"}
+					selected={view ?? "kasir"}
 					onClose={() => setMenuOpen(false)}
-					onSelectKasir={() => {
-						setMenuOpen(false);
-						void navigate({ to: "/pos", search: {} });
-					}}
-					onSelectSavedOrders={() => {
-						setMenuOpen(false);
-						void navigate({ to: "/pos", search: { view: "simpan-pesanan" } });
-					}}
 				/>
 			</ResponsiveDrawer>
 			<main className="flex min-w-0 flex-1 flex-col">
-				<div className="flex shrink-0 items-center justify-between gap-3 border-b border-separator-border bg-background-primary-default p-3 lg:hidden">
-					<Button
-						variant="secondary"
-						iconOnly
-						leadingIcon={RiMenuLine}
-						aria-label="Buka navigasi POS"
-						className="min-h-11 min-w-11"
-						onClick={() => setMenuOpen(true)}
-					/>
-					<Button
-						variant="secondary"
-						leadingIcon={RiShoppingBag3Line}
-						className="min-h-11"
-						onClick={() => setCartOpen(true)}
-					>
-						Keranjang ({cart.reduce((sum, item) => sum + item.quantity, 0)})
-					</Button>
-				</div>
-				<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-separator-border bg-background-primary-default px-4 py-3">
-					<div className="flex flex-col gap-1">
-						<span className="text-body-medium text-text-primary">
-							Alco Coffee · Kasir Demo
-						</span>
-						<span className="text-caption-1-medium text-text-tertiary">
-							Contoh Data · Lokal browser · {online ? "Online" : "Offline"} ·
-							Belum terhubung Supabase
-						</span>
-					</div>
-					<div className="text-end">
-						<p className="text-caption-1-medium text-text-tertiary">
-							Pendapatan contoh hari ini · {today} WIB
-						</p>
-						<p className="text-body-medium tabular-nums text-text-primary">
-							{money(revenue)}
-						</p>
-					</div>
-				</div>
-				{(message || error || !online) && (
-					<div
-						role={error || !online ? "alert" : "status"}
-						className="shrink-0 border-b border-separator-border bg-background-primary-default px-4 py-2 text-body-2-regular text-text-secondary"
-					>
-						{!online
-							? "Offline. Simpan dan bayar dinonaktifkan; keranjang tetap tersedia."
-							: error || message}
-					</div>
+				{!isContentView && (
+					<>
+						<div className="flex shrink-0 items-center justify-between gap-3 border-b border-separator-border bg-background-primary-default p-3 lg:hidden">
+							<Button
+								variant="secondary"
+								iconOnly
+								leadingIcon={RiMenuLine}
+								aria-label="Buka navigasi POS"
+								className="min-h-11 min-w-11"
+								onClick={() => setMenuOpen(true)}
+							/>
+							<Button
+								variant="secondary"
+								leadingIcon={RiShoppingBag3Line}
+								className="min-h-11"
+								onClick={() => setCartOpen(true)}
+							>
+								Keranjang ({cart.reduce((sum, item) => sum + item.quantity, 0)})
+							</Button>
+						</div>
+						<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-separator-border bg-background-primary-default px-4 py-3">
+							<div className="flex items-center gap-2">
+								<Button
+									variant="secondary"
+									iconOnly
+									leadingIcon={RiSideBarFill}
+									aria-label={
+										sidebarCollapsed ? "Perluas sidebar" : "Ciutkan sidebar"
+									}
+									className="max-lg:hidden"
+									onClick={() => setSidebarCollapsed((value) => !value)}
+								/>
+								<div className="flex flex-col gap-1">
+									<span className="text-body-medium text-text-primary">
+										Alco Coffee · Kasir Demo
+									</span>
+									<span className="text-caption-1-medium text-text-tertiary">
+										Contoh Data · Lokal browser · {online ? "Online" : "Offline"} ·
+										Belum terhubung Supabase
+									</span>
+								</div>
+							</div>
+							<div className="text-end">
+								<p className="text-caption-1-medium text-text-tertiary">
+									Pendapatan contoh hari ini · {today} WIB
+								</p>
+								<p className="text-body-medium tabular-nums text-text-primary">
+									{money(revenue)}
+								</p>
+							</div>
+						</div>
+						{(message || error || !online) && (
+							<div
+								role={error || !online ? "alert" : "status"}
+								className="shrink-0 border-b border-separator-border bg-background-primary-default px-4 py-2 text-body-2-regular text-text-secondary"
+							>
+								{!online
+									? "Offline. Simpan dan bayar dinonaktifkan; keranjang tetap tersedia."
+									: error || message}
+							</div>
+						)}
+					</>
 				)}
-				{showSaved ? (
+
+				{showMonitor || showPenjualan || showPromo ? (
+					<div className="min-h-0 flex-1 overflow-y-auto p-4">
+						{showMonitor ? (
+							<MonitorHome />
+						) : showPenjualan ? (
+							<PenjualanHome
+								search={salesSearch}
+								onSearch={(patch) =>
+									setSalesSearch((previous) => ({
+										...previous,
+										page: 1,
+										...patch,
+									}))
+								}
+								showProductRecap={false}
+							/>
+						) : (
+							<PromoHome
+								search={promoSearch}
+								onSearch={(patch) =>
+									setPromoSearch((previous) => ({
+										...previous,
+										...patch,
+										page: 1,
+									}))
+								}
+							/>
+						)}
+					</div>
+				) : showSaved ? (
 					<PosSavedOrders
 						orders={orders}
 						onOpen={openOrder}
@@ -358,9 +416,11 @@ export function PosLayout() {
 					<PosProducts onAdd={addToCart} />
 				)}
 			</main>
-			<aside className="hidden w-[420px] shrink-0 flex-col border-s border-separator-border bg-background-primary-default lg:flex">
-				<PosCart {...cartProps} />
-			</aside>
+			{!isContentView && (
+				<aside className="hidden w-[420px] shrink-0 flex-col border-s border-separator-border bg-background-primary-default lg:flex">
+					<PosCart {...cartProps} />
+				</aside>
+			)}
 			<ResponsiveDrawer
 				isOpen={cartOpen}
 				onOpenChange={setCartOpen}

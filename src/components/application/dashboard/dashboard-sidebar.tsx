@@ -7,12 +7,12 @@ import {
 	RiCustomerServiceLine,
 	RiDashboardLine,
 	RiFolder3Line,
-	RiHomeLine,
 	RiPercentLine,
 	RiSearchLine,
 	RiSettings4Line,
 	RiShoppingBag3Line,
 	RiSideBarFill,
+	RiStore2Line,
 } from "@remixicon/react";
 
 import {
@@ -173,11 +173,10 @@ export type DashboardNavKey = string;
 export const DASHBOARD_NAV: DashboardNavItem[] = [
 	{ key: "monitor", label: "Monitor", icon: RiDashboardLine, href: "/monitor" },
 	{
-		key: "home",
-		label: "Home",
-		icon: RiHomeLine,
-		href: "/dashboard",
-		badge: 152,
+		key: "pos",
+		label: "Pos",
+		icon: RiStore2Line,
+		href: "/pos",
 	},
 	{
 		key: "penjualan",

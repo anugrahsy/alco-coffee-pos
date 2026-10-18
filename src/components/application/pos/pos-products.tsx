@@ -4,6 +4,7 @@ import { useState } from "react";
 import { RiAddLine, RiSearchLine } from "@remixicon/react";
 import { Button } from "@/components/base/buttons/button";
 import { Input } from "@/components/base/input/input";
+import { Tab, TabList, Tabs } from "@/components/base/tabs/tabs";
 import { SoftScroll } from "@/components/application/layout/soft-scroll";
 
 import type { PosCategory, PosProduct } from "./pos-types";
@@ -60,19 +61,19 @@ export function PosProducts({
           placeholder="Cari produk..."
           className="max-w-md"
         />
-        <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((c) => (
-            <Button
-              key={c.key}
-              variant={category === c.key ? "primary" : "secondary"}
-              size="small"
-              className="min-h-11"
-              onClick={() => setCategory(c.key)}
-            >
-              {c.label}
-            </Button>
-          ))}
-        </div>
+        <Tabs
+          selectedKey={category}
+          onSelectionChange={(key) => setCategory(key as CategoryKey)}
+          aria-label="Kategori produk"
+        >
+          <TabList>
+            {CATEGORIES.map((c) => (
+              <Tab key={c.key} id={c.key}>
+                {c.label}
+              </Tab>
+            ))}
+          </TabList>
+        </Tabs>
       </div>
 
       {filtered.length === 0 ? (

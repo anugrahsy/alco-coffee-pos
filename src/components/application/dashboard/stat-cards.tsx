@@ -182,19 +182,24 @@ function StatHint({ label, hint }: { label: string; hint: string }) {
 function PlainStatCard({ stat }: { stat: Stat }) {
   const localize = useTemplateCopy();
   return localize((
-    <section className="flex h-[132px] min-w-0 flex-col items-start justify-between rounded-2xl bg-background-secondary-default p-4">
-      <span className="flex items-center rounded-md bg-stat-card-icon-background p-1.5">
-        <stat.icon className="size-5 shrink-0 text-foreground-icon-primary" aria-hidden />
-      </span>
-      <div className="flex w-full flex-col gap-0.5">
-        <p className="w-full text-body-medium text-text-secondary">{stat.label}</p>
+    <section className="flex min-h-20 min-w-0 items-center gap-3 rounded-2xl bg-background-secondary-default p-4">
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <div className="flex w-full items-center gap-1">
+          <p className="min-w-0 truncate text-body-medium text-text-secondary">
+            {stat.label}
+          </p>
+          {stat.hint && <StatHint label={stat.label} hint={stat.hint} />}
+        </div>
         <div className="flex w-full flex-wrap items-center gap-2">
           <p className="text-headline-medium whitespace-nowrap text-text-primary sm:text-title-1-medium">{stat.value}</p>
-          <Chip variant="bold" color={stat.deltaColor}>
+          <Chip variant="bold" color={stat.deltaColor} className="shrink-0">
             {stat.delta}
           </Chip>
         </div>
       </div>
+      <span className="flex shrink-0 items-center rounded-md bg-stat-card-icon-background p-1.5">
+        <stat.icon className="size-5 shrink-0 text-foreground-icon-primary" aria-hidden />
+      </span>
     </section>
   ));
 }
